@@ -9,6 +9,7 @@ class Gallary extends Phaser.Scene {
         this.bananaCdCntr = 0;
         this.total_enemies = 30;
         this.lives = 3;
+        this.worker_velocity = 10;
     }
     preload() {
         this.load.setPath("./assets/");
@@ -32,7 +33,7 @@ class Gallary extends Phaser.Scene {
         //TIMER
 
         this.move_timer = this.time.addEvent({
-            delay: 5 *1000, //ms
+            delay: 500, //ms
             callback: this.timerEvent,
             callbackScope: this,
             //args: [],
@@ -90,6 +91,7 @@ class Gallary extends Phaser.Scene {
         my.sprite.reg_workers.createMultiple({
             active: false,
             moving: false,
+            last: "down",
             key: my.sprite.reg_workers.defaultKey,
             repeat: my.sprite.reg_workers.maxSize-1,
             visible: false
@@ -153,7 +155,8 @@ class Gallary extends Phaser.Scene {
         
 
         //MOVEMENT TIME //RESUME HERE//////////////////////////////////
-        if (1 - (this.move_timer.getProgress()) < .008) {
+        //console.log(1 - (this.move_timer.getProgress()));
+        if (1 - (this.move_timer.getProgress()) < .1) {
             
             //pick number
             //if i = number move worker,
@@ -164,16 +167,17 @@ class Gallary extends Phaser.Scene {
             let i = 0;
             for (let worker of my.sprite.reg_workers.getChildren()){
                 if (i < 3) {
-                    if (worker.active == true) {
-                        if (Math.floor(Math.random() * 10) < 2) {
+                    
+                    if (worker.active) {
+                        //console.log(worker.active);
+                        if (!worker.moving) {
+                            console.log("selecting worker?");
                             i++;
-                            worker.y += 75;
+                            worker.y += this.worker_velocity;
                             worker.moving = true;
                             //Start animation?
-                            let last = "down";
-                            const move_int = setInterval(this.movement(last, worker), 1000);
-                            
-                        }                         
+                            worker.last = "down";
+                        }                     
                     }
                 }
             }
@@ -182,7 +186,12 @@ class Gallary extends Phaser.Scene {
             console.log("Start moving boi");
             
         }
-
+        //MOVE PLS
+        for (let worker of my.sprite.reg_workers.getChildren()) {
+            if (worker.moving == true) {
+                this.movement(worker);
+            }
+        }
         //KEY LISTENERS
         if (this.aKey.isDown) {
             if (my.sprite.monkey.x > 0+32) {
@@ -246,6 +255,34 @@ class Gallary extends Phaser.Scene {
                 }
             }
         }
+        //COLLISION BETWEEN MONKEY AND WORKER
+        for (let worker of my.sprite.reg_workers.getChildren()) {
+            if (this.collides(worker, my.sprite.monkey)) {
+                // start animation
+                this.puff = this.add.sprite(worker.x, worker.y, "whitePuff03").setScale(0.25).play("puff");
+                // clear out bullet -- put y offscreen, will get reaped next update
+                //banana.x = -600;
+                my.sprite.monkey.visible = false;
+                
+                //worker.x = -600;
+                /*// Update score
+                this.myScore += my.sprite.hippo.scorePoints;
+                this.updateScore();
+                // Play sound
+                this.sound.play("dadada", {
+                    volume: 1   // Can adjust volume using this, goes from 0 to 1
+                });
+                
+                // Have new hippo appear after end of animation
+                this.puff.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+                    this.my.sprite.hippo.visible = true;
+                    this.my.sprite.hippo.x = Math.random()*config.width;
+                }, this);
+                */
+
+            
+            }
+        }
         
         //MAKE BANANAS GO UP
         my.sprite.bananaGroup.incY(-this.bananaSpeed);
@@ -279,29 +316,29 @@ class Gallary extends Phaser.Scene {
         }
     }
     //MOVEMENT FUNCTION
-    movement(last = "down", sprite) {
+    movement(sprite) {
         if (sprite.active == false || sprite.y > 750) { //Base case
             sprite.y = 0;
             sprite.moving = false;
             return;
-        } else if (last != "down") {
-            sprite.y -= 75;
-            last = "down";
+        } else if (sprite.last != "down") {
+            sprite.y += this.worker_velocity;
+            sprite.last = "down";
         } else {
             let dir = Math.floor(Math.random() * 3)
             
             if (dir == 0) {//left
                 
-                sprite.x -= 25;
-                last = "left";
+                sprite.x -= this.worker_velocity;
+                sprite.last = "left";
             } else if (dir ==  1) {//down
                 
-                sprite.y += 75;
-                last = "down";
+                sprite.y += this.worker_velocity;
+                sprite.last = "down";
             } else if (dir == 2) {//right
                 
-                sprite.x += 25;
-                last = "right";
+                sprite.x += this.worker_velocity;
+                sprite.last = "right";
             }
         }
     }
