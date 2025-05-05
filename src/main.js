@@ -20,10 +20,10 @@ let config = {
     render: {
         pixelArt: true  // prevent pixel art from getting blurred when scaled
     },
-    width: 1000,
-    height: 800,
-    scene: [Movement]
-    
+    width: 500,
+    height: 690,
+    scene: [Gallary],
+    fps: { forceSetTimeOut: true, target: 30 }
 }
 
 const game = new Phaser.Game(config);
