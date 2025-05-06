@@ -92,6 +92,7 @@ class Gallary extends Phaser.Scene {
             active: false,
             moving: false,
             last: "down",
+            origin: [0, 0],
             key: my.sprite.reg_workers.defaultKey,
             repeat: my.sprite.reg_workers.maxSize-1,
             visible: false
