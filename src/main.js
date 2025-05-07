@@ -22,7 +22,7 @@ let config = {
     },
     width: 500,
     height: 690,
-    scene: [Gallary],
+    scene: [lvl1, lvl2, End],
     fps: { forceSetTimeOut: true, target: 30 }
 }
 

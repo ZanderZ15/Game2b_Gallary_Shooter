@@ -1,6 +1,6 @@
-class Gallary extends Phaser.Scene {
+class lvl1 extends Phaser.Scene {
     constructor() {
-        super("gallary");
+        super("lvl1");
         this.my = {sprite: {
             xcord:250,
             ycord:600
@@ -10,6 +10,7 @@ class Gallary extends Phaser.Scene {
         this.total_enemies = 30;
         this.lives = 3;
         this.worker_velocity = 10;
+        this.movement_queue = 0;
     }
     preload() {
         this.load.setPath("./assets/");
@@ -18,13 +19,18 @@ class Gallary extends Phaser.Scene {
         this.load.image("r_monkey", "Animal Assets/PNG/Round/monkey.png");
         this.load.image("banana", "peeled_banana.png");
         this.load.image("worker1", "reg_worker.png");
+        this.load.image("fell1", "reg_worker_fell.png");
         //"C:\Users\zande\OneDrive\Desktop\CMPM 120\Game2b_Gallary_Shooter\assets\Traffic\PNG\Characters"
-        //Animation
+        //Animations
+
+        ////Puff
         this.load.image("whitePuff00", "whitePuff00.png");
         this.load.image("whitePuff01", "whitePuff01.png");
         this.load.image("whitePuff02", "whitePuff02.png");
         this.load.image("whitePuff03", "whitePuff03.png");
-        
+
+        ////Blinking Monkey
+        this.load.image("blank", "Blank.png");
         
     }
     create() {
@@ -33,7 +39,7 @@ class Gallary extends Phaser.Scene {
         //TIMER
 
         this.move_timer = this.time.addEvent({
-            delay: 500, //ms
+            delay: 1000, //ms
             callback: this.timerEvent,
             callbackScope: this,
             //args: [],
@@ -52,7 +58,7 @@ class Gallary extends Phaser.Scene {
         my.sprite.lives = this.add.group({
             defaultKey: "r_monkey",
             maxSize: 4,
-            current: 3
+            current: this.lives,
             }
         );
         my.sprite.lives.createMultiple({
@@ -61,15 +67,22 @@ class Gallary extends Phaser.Scene {
             key: my.sprite.lives.defaultKey,
             repeat: my.sprite.lives.maxSize-1,
         });
+        let c = 0;
         for (let life of my.sprite.lives.getChildren()){
-            life.setScale(.1);
-            life.angle = 0;
+            if (c < this.lives-1) {
+                life.setScale(.1);
+                life.angle = 0;
+                life.visible = true;
+                life.x = (500-16)-32*c;
+                life.y = 670;
+                c++;
+            }
         }
 
         //BANANA (BULLETS)
         my.sprite.bananaGroup = this.add.group({
             defaultKey: "banana",
-            maxSize: 3
+            maxSize: 50
             }
         );
         my.sprite.bananaGroup.createMultiple({
@@ -86,13 +99,14 @@ class Gallary extends Phaser.Scene {
         //WORKERS (ENEMIES)
         my.sprite.reg_workers = this.add.group({
             defaultKey: "worker1",
-            maxSize: 27
+            maxSize: 45
         });
         my.sprite.reg_workers.createMultiple({
             active: false,
             moving: false,
             last: "down",
-            origin: [0, 0],
+            ox: 0,
+            oy: 0,
             key: my.sprite.reg_workers.defaultKey,
             repeat: my.sprite.reg_workers.maxSize-1,
             visible: false
@@ -101,17 +115,21 @@ class Gallary extends Phaser.Scene {
         for (let worker of my.sprite.reg_workers.getChildren()){
             worker.setScale(2.5);
             worker.angle = 0;
-            if (Math.floor(Math.random() * 10) > 3) {
+            if (10 > 3) {
+            //if (Math.floor(Math.random() * 10) > 3) {
                 worker.active = true;
                 worker.x = 50 * (((i) % 9) + 1);
                 worker.y = 50 * (Math.floor((i) / 9) + 1);
+                worker.ox = worker.x;
+                worker.oy = worker.y;
                 worker.visible = true;
             } else {
                 worker.x = -200;
             } 
             i++;
         }
-        //ANIMATION
+        //ANIMATIONS
+        ////Puff
         this.anims.create({
             key: "puff",
             frames: [
@@ -125,13 +143,51 @@ class Gallary extends Phaser.Scene {
             repeat: 5,
             hideOnComplete: true
         });
+        ////Worker fall over
+        this.anims.create({
+            key: "worked",
+            frames: [
+                {key: "fell1"},
+                {key: "fell1"},
+                {key: "fell1"},
+                {key: "fell1"},
+                {key: "worker1"},
+                {key: "worker1"},
+                {key: "worker1"},
+                {key: "worker1"},
+                {key: "fell1"},
+                {key: "fell1"},
+                {key: "fell1"},
+                {key: "fell1"}
+            ],
+            x: -100,
+            framerate: .5,
+            repeat: 0,
+            hideOnComplete: true
+        });
+        ////Blinking Monkey
+        this.anims.create({
+            key: "blink",
+            frames: [
+                { key: "s_monkey" },
+                { key: "s_monkey" },
+                { key: "blank" },
+                { key: "blank" }
+            ],
+            x: -100,
+            frameRate: 20,
+            repeat: 5,
+            hideOnComplete: true
+        });
 
 
         //KEYS
         this.aKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.dKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        
+        this.nineKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.NINE);
+        this.zeroKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ZERO);
+
         //SPEEDS
         this.monkeySpeed = 9.36;
         this.bananaSpeed = 20;
@@ -141,55 +197,37 @@ class Gallary extends Phaser.Scene {
         document.getElementById('description').innerHTML = '<h3>A: left // D: right // Space: fire</h3>'
         this.dir ="";
     }
-    /*//////////////////FOR COLLISION: 
-    if thing in row, check against player
-    if thing in column check against player emit?
-    Check player against enemies, enemy emit, and powerups
-    check player emit against enemies in y range?
 
-    
-    */
     update() {
         
         let my = this.my;
         this.bananaCdCntr--;
         
 
-        //MOVEMENT TIME //RESUME HERE//////////////////////////////////
-        //console.log(1 - (this.move_timer.getProgress()));
-        if (1 - (this.move_timer.getProgress()) < .1) {
-            
-            //pick number
-            //if i = number move worker,
-            //else i++
-            
-
-
+        //MOVEMENT TIME
+        if (1 - (this.move_timer.getProgress()) < .025) {
             let i = 0;
             for (let worker of my.sprite.reg_workers.getChildren()){
+                
                 if (i < 3) {
-                    
                     if (worker.active) {
-                        //console.log(worker.active);
                         if (!worker.moving) {
-                            console.log("selecting worker?");
+                            
                             i++;
                             worker.y += this.worker_velocity;
                             worker.moving = true;
-                            //Start animation?
+                            //Scrapped: Walking animation
                             worker.last = "down";
                         }                     
                     }
                 }
             }
-        
-
-            console.log("Start moving boi");
             
         }
         //MOVE PLS
         for (let worker of my.sprite.reg_workers.getChildren()) {
             if (worker.moving == true) {
+
                 this.movement(worker);
             }
         }
@@ -219,6 +257,14 @@ class Gallary extends Phaser.Scene {
             
         }
 
+        if (Phaser.Input.Keyboard.JustDown(this.nineKey)) {
+            this.scene.start("lvl2");
+        }
+        if (Phaser.Input.Keyboard.JustDown(this.zeroKey)) {
+            this.scene.start("end");
+        }
+
+
         //BANANAS THAT ARE OFFSCREEN
         for (let banana of my.sprite.bananaGroup.getChildren()) {
             if (banana.y < -(banana.displayHeight/2)) {
@@ -232,12 +278,15 @@ class Gallary extends Phaser.Scene {
             for (let worker of my.sprite.reg_workers.getChildren()) {
                 if (this.collides(worker, banana)) {
                     // start animation
-                    this.puff = this.add.sprite(worker.x, worker.y, "whitePuff03").setScale(0.25).play("puff");
+                    this.falling = this.add.sprite(worker.x, worker.y, "worker1").setScale(2.5).play("worked");
                     // clear out bullet -- put y offscreen, will get reaped next update
                     banana.x = -600;
                     worker.visible = false;
                     worker.active = false;
+                    worker.moving = false;
+
                     worker.x = -600;
+                    worker.y = -600;
                     /*// Update score
                     this.myScore += my.sprite.hippo.scorePoints;
                     this.updateScore();
@@ -259,13 +308,53 @@ class Gallary extends Phaser.Scene {
         //COLLISION BETWEEN MONKEY AND WORKER
         for (let worker of my.sprite.reg_workers.getChildren()) {
             if (this.collides(worker, my.sprite.monkey)) {
-                // start animation
-                this.puff = this.add.sprite(worker.x, worker.y, "whitePuff03").setScale(0.25).play("puff");
-                // clear out bullet -- put y offscreen, will get reaped next update
-                //banana.x = -600;
+                // start damaged animation
+                this.lives -= 1;
+                if (this.lives == 0) {
+                    this.scene.start("end");
+                }
                 my.sprite.monkey.visible = false;
+                this.blink = this.add.sprite(my.sprite.monkey.x, my.sprite.monkey.y, "blank").setScale(0.1).play("blink");
+                my.sprite.monkey.visible = true;
+                // remove life sprite from bot right
+                let j = 0;
+                for (let life of my.sprite.lives.getChildren()) {
+                    if (life.visible) {
+                        if (this.lives-2 >= j) {
+                            j++;
+                        } else {
+                            life.visible = false;
+                        }
+                    }
+                }
+                // show monkey on end of animation
+                this.blink.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+                    this.my.sprite.monkey.visible = true;
+                }, this);
                 
-                //worker.x = -600;
+                // stop timer
+                this.move_timer.remove();
+
+                // reset moving workers
+                for (let moving of my.sprite.reg_workers.getChildren()) {
+                    if (moving.moving) {
+                        moving.x = moving.ox;
+                        moving.y = moving.oy;
+                        moving.moving = false;
+                    }
+                }
+
+                // restart timer
+                this.move_timer = this.time.addEvent({
+                    delay: 3000, //ms
+                    callback: this.timerEvent,
+                    callbackScope: this,
+                    //args: [],
+                    loop: true,
+                });
+
+                
+                
                 /*// Update score
                 this.myScore += my.sprite.hippo.scorePoints;
                 this.updateScore();
@@ -288,17 +377,17 @@ class Gallary extends Phaser.Scene {
         //MAKE BANANAS GO UP
         my.sprite.bananaGroup.incY(-this.bananaSpeed);
 
-        //IF ALL WORKERS GONE RESTART SCENE
+        //IF ALL WORKERS GONE GO TO NEXT SCENE
         if (this.inactive(my.sprite.reg_workers)) {
-            this.scene.start("gallary");
+            this.scene.start("lvl1");
         }
         
     }
 
     //COLLIDES FUNCTION
     collides(a, b) {
-        if (Math.abs(a.x - b.x) > (a.displayWidth/2 + b.displayWidth/2)) return false;
-        if (Math.abs(a.y - b.y) > (a.displayHeight/2 + b.displayHeight/2)) return false;
+        if (Math.abs(a.x - b.x) > ((a.displayWidth + b.displayWidth)/4)) return false;
+        if (Math.abs(a.y - b.y) > ((a.displayHeight + b.displayHeight)/3.5)) return false;
         return true;
     }
 
@@ -319,7 +408,8 @@ class Gallary extends Phaser.Scene {
     //MOVEMENT FUNCTION
     movement(sprite) {
         if (sprite.active == false || sprite.y > 750) { //Base case
-            sprite.y = 0;
+            sprite.x = sprite.ox;
+            sprite.y = sprite.oy;
             sprite.moving = false;
             return;
         } else if (sprite.last != "down") {
@@ -332,6 +422,9 @@ class Gallary extends Phaser.Scene {
                 
                 sprite.x -= this.worker_velocity;
                 sprite.last = "left";
+                if (sprite.x <= 16) {
+                    sprite.x += 2*this.worker_velocity;
+                }
             } else if (dir ==  1) {//down
                 
                 sprite.y += this.worker_velocity;
@@ -340,6 +433,9 @@ class Gallary extends Phaser.Scene {
                 
                 sprite.x += this.worker_velocity;
                 sprite.last = "right";
+                if (sprite.x >= 484) {
+                    sprite.x -= 2*this.worker_velocity;
+                }
             }
         }
     }
