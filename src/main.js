@@ -22,7 +22,7 @@ let config = {
     },
     width: 500,
     height: 690,
-    scene: [lvl1, lvl2, End],
+    scene: [lvl1, lvl2, lvl3, End],
     fps: { forceSetTimeOut: true, target: 30 }
 }
 

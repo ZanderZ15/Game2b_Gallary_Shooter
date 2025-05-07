@@ -1,6 +1,6 @@
-class lvl1 extends Phaser.Scene {
+class lvl3 extends Phaser.Scene {
     constructor() {
-        super("lvl1");
+        super("lvl3");
         this.my = {sprite: {
             xcord:250,
             ycord:600
@@ -13,41 +13,22 @@ class lvl1 extends Phaser.Scene {
         this.movement_queue = 0;
     }
     preload() {
-        this.load.setPath("./assets/");
-        
-        this.load.image("s_monkey", "Animal Assets/PNG/Square/monkey.png");
-        this.load.image("r_monkey", "Animal Assets/PNG/Round/monkey.png");
-        this.load.image("banana", "peeled_banana.png");
-        this.load.image("worker1", "reg_worker.png");
-        this.load.image("fell1", "reg_worker_fell.png");
-        //"C:\Users\zande\OneDrive\Desktop\CMPM 120\Game2b_Gallary_Shooter\assets\Traffic\PNG\Characters"
-        //Animations
 
-        ////Puff
-        this.load.image("whitePuff00", "whitePuff00.png");
-        this.load.image("whitePuff01", "whitePuff01.png");
-        this.load.image("whitePuff02", "whitePuff02.png");
-        this.load.image("whitePuff03", "whitePuff03.png");
-
-        ////Blinking Monkey
-        this.load.image("blank", "Blank.png");
-        
     }
     create() {
         let my = this.my;
+        console.log("Lvl3");
+        this.load.image("worker2", "enraged_worker.png");
+        this.load.image("worker2_fell", "enraged_worker_fell.png");
         
         //TIMER
-
         this.move_timer = this.time.addEvent({
-            delay: 2500, //ms
+            delay: 1000, //ms
             callback: this.timerEvent,
             callbackScope: this,
             //args: [],
             loop: true,
         });
-
-        
-        
 
         //MONKEY (PLAYER)
         my.sprite.monkey = this.add.sprite(my.sprite.xcord, my.sprite.ycord, "s_monkey");
@@ -130,6 +111,7 @@ class lvl1 extends Phaser.Scene {
         }
         //ANIMATIONS
         ////Puff
+        /*
         this.anims.create({
             key: "puff",
             frames: [
@@ -179,7 +161,7 @@ class lvl1 extends Phaser.Scene {
             repeat: 5,
             hideOnComplete: true
         });
-
+        */
 
         //KEYS
         this.aKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -205,7 +187,7 @@ class lvl1 extends Phaser.Scene {
         
 
         //MOVEMENT TIME
-        if (1 - (this.move_timer.getProgress()) < .0125) {
+        if (1 - (this.move_timer.getProgress()) < .025) {
             let i = 0;
             for (let worker of my.sprite.reg_workers.getChildren()){
                 
@@ -258,7 +240,7 @@ class lvl1 extends Phaser.Scene {
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.nineKey)) {
-            this.scene.start("lvl2");
+            this.scene.start("lvl3");
         }
         if (Phaser.Input.Keyboard.JustDown(this.zeroKey)) {
             this.scene.start("end");
@@ -379,7 +361,7 @@ class lvl1 extends Phaser.Scene {
 
         //IF ALL WORKERS GONE GO TO NEXT SCENE
         if (this.inactive(my.sprite.reg_workers)) {
-            this.scene.start("lvl2");
+            this.scene.start("lvl3");
         }
         
     }
