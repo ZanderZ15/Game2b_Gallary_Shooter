@@ -1,6 +1,6 @@
-class End extends Phaser.Scene {
+class Start2 extends Phaser.Scene {
     constructor() {
-        super("end");
+        super("s2");
     }
     preload() {
 
@@ -8,14 +8,19 @@ class End extends Phaser.Scene {
     create() {
         //show text "Game over"
         //listener for game reset
-        console.log("You died core");
-        console.log("P to reset");
+        console.log("Lvl2");
         this.pKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+        this.zeroKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ZERO);
+
     }
     update() {
         //if reset, go back to scene 1
         if (Phaser.Input.Keyboard.JustDown(this.pKey)) {
-            this.scene.start("s1");
+            this.scene.start("lvl2");
         }
+        if (Phaser.Input.Keyboard.JustDown(this.zeroKey)) {
+            this.scene.start("end");
+        }
+
     }
 }

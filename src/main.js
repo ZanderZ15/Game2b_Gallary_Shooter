@@ -22,8 +22,8 @@ let config = {
     },
     width: 500,
     height: 690,
-    scene: [lvl1, lvl2, lvl3, End],
+    scene: [Start1, Start2, Start3, lvl1, lvl2, lvl3, End],
     fps: { forceSetTimeOut: true, target: 30 }
 }
-
+var lives = 3;
 const game = new Phaser.Game(config);

@@ -5,12 +5,15 @@ class lvl1 extends Phaser.Scene {
             xcord:250,
             ycord:600
         }}; 
+
         this.bananaCd = 3;
         this.bananaCdCntr = 0;
-        this.total_enemies = 30;
-        this.lives = 3;
-        this.worker_velocity = 10;
         this.movement_queue = 0;
+        //SPEEDS
+        this.monkeySpeed = 9.36;
+        this.bananaSpeed = 20;
+        this.netSpeed = 13;
+        this.worker_velocity = 10;
     }
     preload() {
         this.load.setPath("./assets/");
@@ -20,7 +23,9 @@ class lvl1 extends Phaser.Scene {
         this.load.image("banana", "peeled_banana.png");
         this.load.image("worker1", "reg_worker.png");
         this.load.image("fell1", "reg_worker_fell.png");
+        this.load.image("net", "net.png");
         //"C:\Users\zande\OneDrive\Desktop\CMPM 120\Game2b_Gallary_Shooter\assets\Traffic\PNG\Characters"
+        
         //Animations
 
         ////Puff
@@ -35,16 +40,23 @@ class lvl1 extends Phaser.Scene {
     }
     create() {
         let my = this.my;
-        
-        //TIMER
 
+        //TIMERS
+        //MovementTimer
         this.move_timer = this.time.addEvent({
             delay: 2500, //ms
             callback: this.timerEvent,
             callbackScope: this,
             //args: [],
-            loop: true,
+            loop: true
         });
+        //NetTimer
+        this.net_timer = this.time.addEvent({
+            delay: 1500,
+            callback: this.timerEvent,
+            callbackScope: this,
+            loop: true
+        })
 
         
         
@@ -58,7 +70,7 @@ class lvl1 extends Phaser.Scene {
         my.sprite.lives = this.add.group({
             defaultKey: "r_monkey",
             maxSize: 4,
-            current: this.lives,
+            current: lives,
             }
         );
         my.sprite.lives.createMultiple({
@@ -69,7 +81,7 @@ class lvl1 extends Phaser.Scene {
         });
         let c = 0;
         for (let life of my.sprite.lives.getChildren()){
-            if (c < this.lives-1) {
+            if (c < lives-1) {
                 life.setScale(.1);
                 life.angle = 0;
                 life.visible = true;
@@ -82,7 +94,7 @@ class lvl1 extends Phaser.Scene {
         //BANANA (BULLETS)
         my.sprite.bananaGroup = this.add.group({
             defaultKey: "banana",
-            maxSize: 50
+            maxSize: 2
             }
         );
         my.sprite.bananaGroup.createMultiple({
@@ -94,6 +106,22 @@ class lvl1 extends Phaser.Scene {
             banana.x = -100,
             banana.setScale(.075);
             banana.angle = 180;
+        }
+        //NET (ENEMY BULLETS)
+        my.sprite.netGroup = this.add.group({
+            defaultKey: "net",
+            maxSize: 20
+        });
+
+        my.sprite.netGroup.createMultiple({
+            active: false,
+            key: my.sprite.netGroup.defaultKey,
+            repeat: my.sprite.netGroup.maxSize-1,
+        });
+        for (let net of my.sprite.netGroup.getChildren()){
+            net.x = -100,
+            net.setScale(2);
+            net.angle = 45;
         }
 
         //WORKERS (ENEMIES)
@@ -188,9 +216,7 @@ class lvl1 extends Phaser.Scene {
         this.nineKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.NINE);
         this.zeroKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ZERO);
 
-        //SPEEDS
-        this.monkeySpeed = 9.36;
-        this.bananaSpeed = 20;
+        
 
         //TITLE AND CONTROLS
         document.getElementById('gameTitle').innerHTML = '<h2>Zoo Escape</h2>'
@@ -205,7 +231,7 @@ class lvl1 extends Phaser.Scene {
         
 
         //MOVEMENT TIME
-        if (1 - (this.move_timer.getProgress()) < .0125) {
+        if (1 - (this.move_timer.getProgress()) < .0175) {
             let i = 0;
             for (let worker of my.sprite.reg_workers.getChildren()){
                 
@@ -222,7 +248,6 @@ class lvl1 extends Phaser.Scene {
                     }
                 }
             }
-            
         }
         //MOVE PLS
         for (let worker of my.sprite.reg_workers.getChildren()) {
@@ -231,6 +256,30 @@ class lvl1 extends Phaser.Scene {
                 this.movement(worker);
             }
         }
+        //NET TIMER
+        if (1 - (this.net_timer.getProgress()) < .0175) {
+            let i = 0;
+            for (let worker of my.sprite.reg_workers.getChildren()){
+                if (i < 10) {
+                    if (worker.active) {
+                        if (!worker.moving) {
+                            if (i % 2 == 0) {
+                                let net = my.sprite.netGroup.getFirstDead();
+                                if (net != null) {
+                                    net.active = true;
+                                    net.visible = true;
+                                    net.x = worker.x;
+                                    net.y = worker.y;
+                                }
+                            }
+                            i++;
+                        }                     
+                    }
+                }
+            }
+        }
+
+
         //KEY LISTENERS
         if (this.aKey.isDown) {
             if (my.sprite.monkey.x > 0+32) {
@@ -243,7 +292,6 @@ class lvl1 extends Phaser.Scene {
             }
         }
         if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-            
             if (this.bananaCdCntr < 0) {
                 let banana = my.sprite.bananaGroup.getFirstDead();
                 if (banana != null) {
@@ -258,7 +306,7 @@ class lvl1 extends Phaser.Scene {
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.nineKey)) {
-            this.scene.start("lvl2");
+            this.scene.start("s2");
         }
         if (Phaser.Input.Keyboard.JustDown(this.zeroKey)) {
             this.scene.start("end");
@@ -272,6 +320,13 @@ class lvl1 extends Phaser.Scene {
                 banana.visible = false;
             }
         }
+        //NETS OFFSCREEN
+        for (let net of my.sprite.netGroup.getChildren()) {
+            if (net.y > (1000)) {
+                net.active = false;
+                net.visible = false;
+            }
+        }
 
         //COLLISION BETWEEN BANANA AND WORKER
         for (let banana of my.sprite.bananaGroup.getChildren()) {
@@ -280,7 +335,7 @@ class lvl1 extends Phaser.Scene {
                     // start animation
                     this.falling = this.add.sprite(worker.x, worker.y, "worker1").setScale(2.5).play("worked");
                     // clear out bullet -- put y offscreen, will get reaped next update
-                    banana.x = -600;
+                    banana.y = -1000;
                     worker.visible = false;
                     worker.active = false;
                     worker.moving = false;
@@ -308,78 +363,23 @@ class lvl1 extends Phaser.Scene {
         //COLLISION BETWEEN MONKEY AND WORKER
         for (let worker of my.sprite.reg_workers.getChildren()) {
             if (this.collides(worker, my.sprite.monkey)) {
-                // start damaged animation
-                this.lives -= 1;
-                if (this.lives == 0) {
-                    this.scene.start("end");
-                }
-                my.sprite.monkey.visible = false;
-                this.blink = this.add.sprite(my.sprite.monkey.x, my.sprite.monkey.y, "blank").setScale(0.1).play("blink");
-                my.sprite.monkey.visible = true;
-                // remove life sprite from bot right
-                let j = 0;
-                for (let life of my.sprite.lives.getChildren()) {
-                    if (life.visible) {
-                        if (this.lives-2 >= j) {
-                            j++;
-                        } else {
-                            life.visible = false;
-                        }
-                    }
-                }
-                // show monkey on end of animation
-                this.blink.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-                    this.my.sprite.monkey.visible = true;
-                }, this);
-                
-                // stop timer
-                this.move_timer.remove();
-
-                // reset moving workers
-                for (let moving of my.sprite.reg_workers.getChildren()) {
-                    if (moving.moving) {
-                        moving.x = moving.ox;
-                        moving.y = moving.oy;
-                        moving.moving = false;
-                    }
-                }
-
-                // restart timer
-                this.move_timer = this.time.addEvent({
-                    delay: 3000, //ms
-                    callback: this.timerEvent,
-                    callbackScope: this,
-                    //args: [],
-                    loop: true,
-                });
-
-                
-                
-                /*// Update score
-                this.myScore += my.sprite.hippo.scorePoints;
-                this.updateScore();
-                // Play sound
-                this.sound.play("dadada", {
-                    volume: 1   // Can adjust volume using this, goes from 0 to 1
-                });
-                
-                // Have new hippo appear after end of animation
-                this.puff.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-                    this.my.sprite.hippo.visible = true;
-                    this.my.sprite.hippo.x = Math.random()*config.width;
-                }, this);
-                */
-
-            
+                this.takeDamage();
             }
         }
-        
+        //Collision btw monkey and net
+        for (let net of my.sprite.netGroup.getChildren()) {
+            if (this.collides(net, my.sprite.monkey)) {
+                this.takeDamage();
+            }
+        }
         //MAKE BANANAS GO UP
         my.sprite.bananaGroup.incY(-this.bananaSpeed);
+        //Make nets go down
+        my.sprite.netGroup.incY(this.netSpeed);
 
         //IF ALL WORKERS GONE GO TO NEXT SCENE
         if (this.inactive(my.sprite.reg_workers)) {
-            this.scene.start("lvl2");
+            this.scene.start("s2");
         }
         
     }
@@ -438,5 +438,82 @@ class lvl1 extends Phaser.Scene {
                 }
             }
         }
+    }
+    takeDamage() {
+        let my = this.my;
+        //RESET NETS
+        for (let net of my.sprite.netGroup.getChildren()) {
+            net.x = -600;
+        }
+        
+        // start damaged animation
+        lives -= 1;
+        if (lives == 0) {
+            this.scene.start("end");
+        }
+        my.sprite.monkey.visible = false;
+        this.blink = this.add.sprite(my.sprite.monkey.x, my.sprite.monkey.y, "blank").setScale(0.1).play("blink");
+        my.sprite.monkey.visible = true;
+        // remove life sprite from bot right
+        let j = 0;
+        for (let life of my.sprite.lives.getChildren()) {
+            if (life.visible) {
+                if (lives-2 >= j) {
+                    j++;
+                } else {
+                    life.visible = false;
+                }
+            }
+        }
+        // show monkey on end of animation
+        this.blink.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+            this.my.sprite.monkey.visible = true;
+        }, this);
+        
+        // stop timer
+        this.move_timer.remove();
+        this.net_timer.remove();
+
+        // reset moving workers
+        for (let moving of my.sprite.reg_workers.getChildren()) {
+            if (moving.moving) {
+                moving.x = moving.ox;
+                moving.y = moving.oy;
+                moving.moving = false;
+            }
+        }
+        // restart timers
+        this.move_timer = this.time.addEvent({
+            delay: 3000, //ms
+            callback: this.timerEvent,
+            callbackScope: this,
+            //args: [],
+            loop: true,
+        });
+        this.net_timer = this.time.addEvent({
+            delay: 1500,
+            callback: this.timerEvent,
+            callbackScope: this,
+            loop: true
+        })
+
+        
+        
+        /*// Update score
+        this.myScore += my.sprite.hippo.scorePoints;
+        this.updateScore();
+        // Play sound
+        this.sound.play("dadada", {
+            volume: 1   // Can adjust volume using this, goes from 0 to 1
+        });
+        
+        // Have new hippo appear after end of animation
+        this.puff.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+            this.my.sprite.hippo.visible = true;
+            this.my.sprite.hippo.x = Math.random()*config.width;
+        }, this);
+        */
+
+    
     }
 }
