@@ -4,7 +4,8 @@ class lvl3 extends Phaser.Scene {
         this.my = {sprite: {
             xcord:250,
             ycord:600
-        }}; 
+        },
+        text: {}}; 
         
         this.bananaCd = 3;
         this.bananaCdCntr = 0;
@@ -21,7 +22,17 @@ class lvl3 extends Phaser.Scene {
         this.load.image("fell2", "enraged_worker_fell.png");
     }
     create() {
-        let my = this.my;
+        let my = this.my;   
+
+        this.map = this.add.tilemap("map", 16, 16, 10, 10);
+        this.tileset = this.map.addTilesetImage("level_set", "background_tiles");
+        this.grassLayer = this.map.createLayer("Tile Layer 1", this.tileset, 0, 0);
+        this.grassLayer.setScale(1.0);
+        
+        //Score
+        my.text.score = this.add.bitmapText(10, 655, "rocketSquare", "Score: " + score);
+        //Lives
+        my.text.l = this.add.bitmapText(380, 620, "rocketSquare", "lives");
         
         //Animations
         
@@ -83,7 +94,7 @@ class lvl3 extends Phaser.Scene {
             repeat: my.sprite.bananaGroup.maxSize-1,
         });
         for (let banana of my.sprite.bananaGroup.getChildren()){
-            banana.x = -100,
+            banana.x = -2000,
             banana.setScale(.075);
             banana.angle = 180;
         }
@@ -125,7 +136,7 @@ class lvl3 extends Phaser.Scene {
             worker.setScale(2.5);
             worker.angle = 0;
             worker.name = "reg";
-            if (i < 18) {
+            if (i < 45) {
                 if (i % 2 == 0) {
                     //if (Math.floor(Math.random() * 10) > 3) {
                     worker.active = true;
@@ -137,21 +148,13 @@ class lvl3 extends Phaser.Scene {
                 } else {
                     worker.x = -200;
                 } 
-            } else {
-                worker.active = true;
-                worker.x = 50 * (((i) % 9) + 1);
-                worker.y = 50 * (Math.floor((i) / 9) + 1);
-                worker.ox = worker.x;
-                worker.oy = worker.y;
-                worker.visible = true;
-            
             }
             i++;
         }
         //ENRAGED WORKERS (ENEMIES)
         my.sprite.en_workers = this.add.group({
             defaultKey: "worker2",
-            maxSize: 18
+            maxSize: 45
         });
         my.sprite.en_workers.createMultiple({
             active: false,
@@ -304,7 +307,7 @@ class lvl3 extends Phaser.Scene {
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.nineKey)) {
-            this.scene.start("lvl3");
+            this.scene.start("s3");
         }
         if (Phaser.Input.Keyboard.JustDown(this.zeroKey)) {
             this.scene.start("end");
@@ -326,17 +329,17 @@ class lvl3 extends Phaser.Scene {
                     // start animation
                     this.falling = this.add.sprite(worker.x, worker.y, "worker1").setScale(2.5).play("worked");
                     // clear out bullet -- put y offscreen, will get reaped next update
-                    banana.x = -600;
+                    banana.x = -2000;
                     worker.visible = false;
                     worker.active = false;
                     worker.moving = false;
 
-                    worker.x = -600;
-                    worker.y = -600;
-                    /*// Update score
-                    this.myScore += my.sprite.hippo.scorePoints;
+                    worker.x = -1000;
+                    worker.y = 0;
+                    // Update score
+                    score += 100;
                     this.updateScore();
-                    // Play sound
+                    /*// Play sound
                     this.sound.play("dadada", {
                         volume: 1   // Can adjust volume using this, goes from 0 to 1
                     });
@@ -355,39 +358,34 @@ class lvl3 extends Phaser.Scene {
                         // start animation
                         this.falling = this.add.sprite(worker.x, worker.y, "worker1").setScale(2.5).play("en_worked");
                         // clear out bullet -- put y offscreen, will get reaped next update
-                        banana.y = -1000;
+                        banana.y = -2000;
                         worker.visible = false;
                         worker.active = false;
                         worker.moving = false;
     
-                        worker.x = -600;
-                        worker.y = -600;
+                        worker.x = -1000;
+                        worker.y = 0;
+                        // Update score
+                        score += 100;
+                        this.updateScore();
+                        /*// Play sound
+                        this.sound.play("dadada", {
+                            volume: 1   // Can adjust volume using this, goes from 0 to 1
+                        });
+                        
+                        // Have new hippo appear after end of animation
+                        this.puff.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+                            this.my.sprite.hippo.visible = true;
+                            this.my.sprite.hippo.x = Math.random()*config.width;
+                        }, this);
+                        */
                     }
                 }
         }
         //COLLISION BETWEEN MONKEY AND WORKERS
         for (let worker of my.sprite.reg_workers.getChildren()) {
             if (this.collides(worker, my.sprite.monkey)) {
-                this.takeDamage();
-                
-                
-                
-                /*// Update score
-                this.myScore += my.sprite.hippo.scorePoints;
-                this.updateScore();
-                // Play sound
-                this.sound.play("dadada", {
-                    volume: 1   // Can adjust volume using this, goes from 0 to 1
-                });
-                
-                // Have new hippo appear after end of animation
-                this.puff.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-                    this.my.sprite.hippo.visible = true;
-                    this.my.sprite.hippo.x = Math.random()*config.width;
-                }, this);
-                */
-
-            
+                this.takeDamage();        
             }
         }
         ////collision ENRAGED
@@ -539,24 +537,9 @@ class lvl3 extends Phaser.Scene {
             callbackScope: this,
             loop: true
         })
-
-        
-        
-        /*// Update score
-        this.myScore += my.sprite.hippo.scorePoints;
-        this.updateScore();
-        // Play sound
-        this.sound.play("dadada", {
-            volume: 1   // Can adjust volume using this, goes from 0 to 1
-        });
-        
-        // Have new hippo appear after end of animation
-        this.puff.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-            this.my.sprite.hippo.visible = true;
-            this.my.sprite.hippo.x = Math.random()*config.width;
-        }, this);
-        */
-
-    
+    }
+    updateScore() {
+        let my = this.my;
+        my.text.score.setText("Score " + score);
     }
 }

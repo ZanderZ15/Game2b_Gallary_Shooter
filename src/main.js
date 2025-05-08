@@ -26,4 +26,5 @@ let config = {
     fps: { forceSetTimeOut: true, target: 30 }
 }
 var lives = 3;
+var score = 0;
 const game = new Phaser.Game(config);
